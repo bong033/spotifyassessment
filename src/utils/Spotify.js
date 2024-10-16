@@ -1,7 +1,7 @@
 let accessToken = "";
 const clientID = "d7e254d8f59b4764b19848194eb5cb12";
-const redirectUrl = "http://localhost:3000";
-// const redirectUrl = "https://your_spotify_app.surge.sh";
+// const redirectUrl = "http://localhost:3000";
+const redirectUrl = "https://bong033-fsd04.surge.sh";
 
 // const Spotify stores function objects
 const Spotify = {
@@ -35,6 +35,10 @@ const Spotify = {
   },
 
   async search(term) {    // search Function Object takes in a term to search for
+
+    if (term === null || term === undefined || term === "")
+      return;
+
     accessToken = Spotify.getAccessToken();
     return await fetch(`https://api.spotify.com/v1/search?type=track&q=${term}`, {
       method: "GET",
@@ -56,7 +60,33 @@ const Spotify = {
   },
 
   savePlaylist(name, trackUris) {   // savePlayList takes in the name and the Url of the track to save
-  
+    if (!name || !trackUris) return;
+    const aToken = Spotify.getAccessToken();
+    const header = { Authorization: `Bearer ${aToken}` };
+    let userId = "";
+    return fetch(`https://api.spotify.com/v1/me`, { headers: header })
+      .then((response) => response.json())
+      .then((jsonResponse) => {
+        userId = jsonResponse.id;
+        let playlistId = "";
+        return fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+          headers: header,
+          method: "post",
+          body: JSON.stringify({ name: name }),
+        })
+          .then((response) => response.json())
+          .then((jsonResponse) => {
+            playlistId = jsonResponse.id;
+            return fetch(
+              `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+              {
+                headers: header,
+                method: "post",
+                body: JSON.stringify({ uris: trackUris }),
+              }
+            );
+          });
+      });
   },
 
 };
